@@ -69,11 +69,20 @@ jobs:
       - run:
           name: Minitest with Knapsack Pro
           command: |
-            export KNAPSACK_PRO_TEST_FILE_LIST_SOURCE_FILE=/tmp/tests_to_run.txt
+            # export KNAPSACK_PRO_TEST_FILE_LIST_SOURCE_FILE=/tmp/tests_to_run.txt
   
+            # # Retrieve the tests to run (all or just the failed ones), and let Knapsack Pro split them optimally.
+            # circleci tests glob "spec/**/*_spec.rb" | circleci tests run --index 0 --total 1 --command ">$KNAPSACK_PRO_TEST_FILE_LIST_SOURCE_FILE xargs -n1 echo" --verbose
+            # bundle exec rake "knapsack_pro:queue:rspec[--verbose --ci-report --no-ci-clean]"
+            export CIRCLE_TEST_REPORTS=/tmp/test-results
+            mkdir -p $CIRCLE_TEST_REPORTS
+            
+            export KNAPSACK_PRO_RSPEC_SPLIT_BY_TEST_EXAMPLES=true
+            
+            export KNAPSACK_PRO_TEST_FILE_LIST_SOURCE_FILE=/tmp/tests_to_run.txt
             # Retrieve the tests to run (all or just the failed ones), and let Knapsack Pro split them optimally.
             circleci tests glob "spec/**/*_spec.rb" | circleci tests run --index 0 --total 1 --command ">$KNAPSACK_PRO_TEST_FILE_LIST_SOURCE_FILE xargs -n1 echo" --verbose
-            bundle exec rake "knapsack_pro:queue:rspec[--verbose --ci-report --no-ci-clean]"
+            bundle exec rake "knapsack_pro:queue:rspec[--format documentation --format RspecJunitFormatter --out tmp/rspec.xml]"
 
   # integration-regular-rspec:
   #   parallelism: 2
