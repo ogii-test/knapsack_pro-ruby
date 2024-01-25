@@ -63,13 +63,13 @@ jobs:
       - run: bundle exec rspec spec
       #- run: bundle exec ruby spec/knapsack_pro/formatters/time_tracker_specs.rb
       - run:
-        name: Minitest with Knapsack Pro
-        command: |
-          export KNAPSACK_PRO_TEST_FILE_LIST_SOURCE_FILE=/tmp/tests_to_run.txt
-
-          # Retrieve the tests to run (all or just the failed ones), and let Knapsack Pro split them optimally.
-          circleci tests glob "test/**/*_test.rb" | circleci tests run --index 0 --total 1 --command ">$KNAPSACK_PRO_TEST_FILE_LIST_SOURCE_FILE xargs -n1 echo" --verbose
-          bundle exec rake "knapsack_pro:queue:minitest[--verbose --ci-report --no-ci-clean]"
+          name: Minitest with Knapsack Pro
+          command: |
+            export KNAPSACK_PRO_TEST_FILE_LIST_SOURCE_FILE=/tmp/tests_to_run.txt
+  
+            # Retrieve the tests to run (all or just the failed ones), and let Knapsack Pro split them optimally.
+            circleci tests glob "test/**/*_test.rb" | circleci tests run --index 0 --total 1 --command ">$KNAPSACK_PRO_TEST_FILE_LIST_SOURCE_FILE xargs -n1 echo" --verbose
+            bundle exec rake "knapsack_pro:queue:minitest[--verbose --ci-report --no-ci-clean]"
 
   # integration-regular-rspec:
   #   parallelism: 2
