@@ -57,10 +57,11 @@ jobs:
     docker:
       - image: cimg/ruby:3.2
     steps:
-      - setup_rails_app_with_knapsack_pro:
-          path: ~/rails-app-with-knapsack_pro
-          ruby: "3.1" #<< parameters.ruby >>
-          rspec: "3.11.0" #<< parameters.rspec >>
+      # - setup_rails_app_with_knapsack_pro:
+      #     path: ~/rails-app-with-knapsack_pro
+      #     ruby: "3.1" #<< parameters.ruby >>
+      #     rspec: "3.11.0" #<< parameters.rspec >>
+      - setup_knapsack_pro_ruby
       - run: gem install rubocop
       - run: rubocop --fail-level A --only Style/FrozenStringLiteralComment,Layout/EmptyLineAfterMagicComment lib/
       - run: bundle exec rspec spec
