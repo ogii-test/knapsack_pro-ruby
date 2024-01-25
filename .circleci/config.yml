@@ -17,38 +17,38 @@ commands:
             - ./vendor/bundle
           key: v1-bundler-ruby-{{ checksum "knapsack_pro.gemspec" }}
 
-  # setup_rails_app_with_knapsack_pro:
-  #   parameters:
-  #     path:
-  #       type: string
-  #     ruby:
-  #       type: string
-  #     rspec:
-  #       type: string
-  #       default: ""
-  #   steps:
-  #     - run:
-  #         working_directory: << parameters.path >>
-  #         command: |
-  #           git clone --depth 1 --branch $CIRCLE_BRANCH --single-branch git@github.com:KnapsackPro/rails-app-with-knapsack_pro.git ./ || git clone --depth 1 git@github.com:KnapsackPro/rails-app-with-knapsack_pro.git ./
-  #           if [[ "<< parameters.rspec >>" != "" ]]; then
-  #             sed -i 's/.*gem.*rspec-core.*/gem "rspec-core", "<< parameters.rspec >>"/g' ./Gemfile
-  #             echo "Updated RSpec version in Gemfile"
-  #           fi
-  #     - restore_cache:
-  #         keys:
-  #         - v1-bundler-rails-{{ checksum "Gemfile.lock" }}-<< parameters.ruby >>
-  #         - v1-bundler-rails-{{ checksum "Gemfile.lock" }}-
-  #         - v1-bundler-rails-
-  #     - run:
-  #         working_directory: << parameters.path >>
-  #         command: |
-  #           bundle config set --local path './vendor/bundle'
-  #           bundle install --jobs=4 --retry=3
-  #     - save_cache:
-  #         paths:
-  #           - << parameters.path >>/vendor/bundle
-  #         key: v1-bundler-rails-{{ checksum "Gemfile.lock" }}-<< parameters.ruby >>
+  setup_rails_app_with_knapsack_pro:
+    parameters:
+      path:
+        type: string
+      ruby:
+        type: string
+      rspec:
+        type: string
+        default: ""
+    steps:
+      - run:
+          working_directory: << parameters.path >>
+          command: |
+            git clone --depth 1 --branch $CIRCLE_BRANCH --single-branch git@github.com:KnapsackPro/rails-app-with-knapsack_pro.git ./ || git clone --depth 1 git@github.com:KnapsackPro/rails-app-with-knapsack_pro.git ./
+            if [[ "<< parameters.rspec >>" != "" ]]; then
+              sed -i 's/.*gem.*rspec-core.*/gem "rspec-core", "<< parameters.rspec >>"/g' ./Gemfile
+              echo "Updated RSpec version in Gemfile"
+            fi
+      - restore_cache:
+          keys:
+          - v1-bundler-rails-{{ checksum "Gemfile.lock" }}-<< parameters.ruby >>
+          - v1-bundler-rails-{{ checksum "Gemfile.lock" }}-
+          - v1-bundler-rails-
+      - run:
+          working_directory: << parameters.path >>
+          command: |
+            bundle config set --local path './vendor/bundle'
+            bundle install --jobs=4 --retry=3
+      - save_cache:
+          paths:
+            - << parameters.path >>/vendor/bundle
+          key: v1-bundler-rails-{{ checksum "Gemfile.lock" }}-<< parameters.ruby >>
 
 jobs:
   unit:
@@ -57,11 +57,19 @@ jobs:
     docker:
       - image: cimg/ruby:3.2
     steps:
-      - setup_knapsack_pro_ruby
+      - setup_rails_app_with_knapsack_pro #setup_knapsack_pro_ruby
       - run: gem install rubocop
       - run: rubocop --fail-level A --only Style/FrozenStringLiteralComment,Layout/EmptyLineAfterMagicComment lib/
       - run: bundle exec rspec spec
-      - run: bundle exec ruby spec/knapsack_pro/formatters/time_tracker_specs.rb
+      #- run: bundle exec ruby spec/knapsack_pro/formatters/time_tracker_specs.rb
+      - run:
+        name: Minitest with Knapsack Pro
+        command: |
+          export KNAPSACK_PRO_TEST_FILE_LIST_SOURCE_FILE=/tmp/tests_to_run.txt
+
+          # Retrieve the tests to run (all or just the failed ones), and let Knapsack Pro split them optimally.
+          circleci tests glob "test/**/*_test.rb" | circleci tests run --index 0 --total 1 --command ">$KNAPSACK_PRO_TEST_FILE_LIST_SOURCE_FILE xargs -n1 echo" --verbose
+          bundle exec rake "knapsack_pro:queue:minitest[--verbose --ci-report --no-ci-clean]"
 
   # integration-regular-rspec:
   #   parallelism: 2
