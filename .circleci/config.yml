@@ -62,6 +62,12 @@ jobs:
       #     ruby: "3.1" #<< parameters.ruby >>
       #     rspec: "3.11.0" #<< parameters.rspec >>
       - setup_knapsack_pro_ruby
+      - run: |
+          git clone --depth 1 --branch $CIRCLE_BRANCH --single-branch git@github.com:ogii-test/knapsack_pro-ruby.git ./ || git clone --depth 1 git@github.com:ogii-test/knapsack_pro-ruby.git ./
+          if [[ "<< parameters.rspec >>" != "" ]]; then
+            sed -i 's/.*gem.*rspec-core.*/gem "rspec-core", "<< parameters.rspec >>"/g' ./Gemfile
+            echo "Updated RSpec version in Gemfile"
+          fi
       - run: gem install rubocop
       - run: rubocop --fail-level A --only Style/FrozenStringLiteralComment,Layout/EmptyLineAfterMagicComment lib/
       - run: bundle exec rspec spec
